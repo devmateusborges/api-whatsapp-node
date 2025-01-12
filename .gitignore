@@ -1,0 +1,40 @@
+# Node modules
+node_modules/
+
+# Dependências do TypeScript
+/dist
+/build
+
+# Arquivos de log
+*.log
+
+# Arquivos do ambiente local
+.env
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos do editor de código
+.vscode/
+.idea/
+
+# Arquivos de configuração do npm
+package-lock.json
+yarn.lock
+
+# Diretórios de cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos do Docker
+*.dockerfile
+Dockerfile*
+
+# Arquivos temporários de sistema
+*.swp
+*.swo
+
+# Arquivos gerados pelo TypeScript
+*.tsbuildinfo

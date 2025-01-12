@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Webhook Config</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #qr-code {
+            display: none;
+            margin: 20px 0;
+        }
+
+        #status {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .connected {
+            color: green;
+        }
+
+        .disconnected {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>WhatsApp Webhook</h1>
+        <div id="status" class="disconnected">Aguardando conexão...</div>
+        <img id="qr-code" src="" alt="QR Code para conexão">
+    </div>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('http://localhost:3000/status');
+                const data = await response.json();
+
+                if (data.connected) {
+                    document.getElementById('status').textContent = 'Conectado ao WhatsApp!';
+                    document.getElementById('status').classList.remove('disconnected');
+                    document.getElementById('status').classList.add('connected');
+                    document.getElementById('qr-code').style.display = 'none';
+                } else if (data.qr) {
+                    document.getElementById('status').textContent = 'Escaneie o QR Code abaixo:';
+                    document.getElementById('status').classList.add('disconnected');
+                    document.getElementById('qr-code').style.display = 'block';
+                    document.getElementById('qr-code').src = data.qr;
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = 'Erro ao conectar ao servidor.';
+                console.error('Erro:', error);
+            }
+        }
+
+        // Verificar o status a cada 5 segundos
+        setInterval(checkStatus, 5000);
+    </script>
+
+</body>
+</html>
