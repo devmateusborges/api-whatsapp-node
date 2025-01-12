@@ -9,11 +9,16 @@ app.use(express.json());
 
 // Criação do cliente
 const client = new Client({
-    authStrategy: new LocalAuth(),
-});
+    puppeteer: {
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Adicionar estas linhas
+    }
+  });
+  
 
-let urlWeb: string = "http://localhost:5678/webhook-test/whats";
-let portApi: number = 3000;
+let urlWebhookProducao: string = "http://localhost:5678/webhook/whats";
+let urlWebhookTeste: string = "http://localhost:5678/webhook-test/whats";
+let testehabilitarTeste: Boolean = true;
+
 
 // Evento para geração do QR Code
 client.on('qr', (qr: string) => {
@@ -35,7 +40,7 @@ client.on('message', async (msg: Message) => {
 
     // Envia a mensagem recebida para o webhook com o número apenas
     try {
-        await axios.post(urlWeb, {
+        await axios.post(testehabilitarTeste ? urlWebhookTeste : urlWebhookProducao, {
             edite: msg.edit,
             deviceType : msg.deviceType,
             from: senderNumber,
@@ -43,6 +48,7 @@ client.on('message', async (msg: Message) => {
             timestamp: msg.timestamp,
         });
         console.log('Mensagem enviada ao webhook com sucesso!');
+        console.log('web')
     } catch (error) {
         console.error('Erro ao enviar a mensagem para o webhook:', error);
     }
@@ -63,11 +69,14 @@ app.post('/send-message', async (req: Request, res: Response) => {
 
 
 app.post('/config', async (req: Request, res: Response) => {
-    const { url, port }: {  url: string, port: number } = req.body;
+    const { webhookProducao, webhookTeste, habilitarTeste }: {  webhookProducao: string, webhookTeste: string, habilitarTeste: boolean } = req.body;
 
     try {
-        urlWeb = url;
-        portApi = port;
+        
+        urlWebhookProducao = webhookProducao;
+        urlWebhookTeste = webhookTeste;
+        testehabilitarTeste = habilitarTeste;
+        
         res.status(200).json({ status: 'Gravando webhook com sucesso!' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao enviar a mensagem', details: error });
@@ -75,7 +84,7 @@ app.post('/config', async (req: Request, res: Response) => {
 });
 
 // Inicia o servidor Express
-const PORT = portApi;
+const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`API rodando em http://localhost:${PORT}`);
 });
