@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp QR Code - Configuração de Webhook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans bg-gray-100 flex flex-col items-center justify-center h-screen">
+
+    <h2 class="text-2xl font-semibold mt-8 mb-4">Configuração de Webhook</h2>
+    <div class="w-80 flex flex-col mt-4">
+        <input type="text" id="webhookProducao" placeholder="URL Webhook Produção" class="p-2 mb-4 border border-gray-300 rounded-md">
+        <input type="text" id="webhookTeste" placeholder="URL Webhook Teste" class="p-2 mb-4 border border-gray-300 rounded-md">
+        <label class="mb-4">
+            <input type="checkbox" id="habilitarTeste" class="mr-2"> Habilitar modo de teste
+        </label>
+        <button id="configurar" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Salvar Configuração</button>
+    </div>
+
+    <div id="update-status" class="mt-4 text-blue-500 text-xl">Configurações não atualizadas.</div>
+
+    <!-- Modal de Sucesso -->
+    <div id="modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-md w-96">
+            <h3 class="text-xl font-semibold text-green-500">Configurações atualizadas com sucesso!</h3>
+            <button id="close-modal" class="mt-4 bg-green-500 text-white p-2 rounded-md hover:bg-green-600">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Botão para verificar o WhatsApp conectado -->
+    <button id="verificarWhats" class="mt-4 bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600">Verificar WhatsApp Conectado</button>
+
+    <script>
+        // Atualizar o QR Code quando recebido do servidor
+        const eventSource = new EventSource('/qr-code-stream');
+        eventSource.onmessage = (event) => {
+            document.getElementById('qr-code').innerHTML = `<img src="${event.data}" alt="QR Code" class="max-w-full h-auto">`;
+        };
+
+        // Atualizar o status de conexão
+        const statusSource = new EventSource('/connection-status');
+        statusSource.onmessage = (event) => {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = `Status: ${event.data}`;
+            if (event.data === 'Conectado') {
+                statusElement.classList.remove('text-red-500');
+                statusElement.classList.add('text-green-500');
+            } else {
+                statusElement.classList.remove('text-green-500');
+                statusElement.classList.add('text-red-500');
+            }
+        };
+
+        // Função para verificar se as configurações foram atualizadas
+        function verificarAtualizacao() {
+            const webhookProducao = document.getElementById('webhookProducao').value;
+            const webhookTeste = document.getElementById('webhookTeste').value;
+            const habilitarTeste = document.getElementById('habilitarTeste').checked;
+
+            const updateStatusElement = document.getElementById('update-status');
+            if (webhookProducao && webhookTeste) {
+                updateStatusElement.textContent = "Configurações atualizadas com sucesso!";
+                updateStatusElement.style.color = "green";
+
+                // Exibir o modal de sucesso
+                document.getElementById('modal').classList.remove('hidden');
+            } else {
+                updateStatusElement.textContent = "Preencha todos os campos para salvar as configurações.";
+                updateStatusElement.style.color = "red";
+            }
+        }
+
+        // Configurar URLs de webhook
+        document.getElementById('configurar').addEventListener('click', async () => {
+            const webhookProducao = document.getElementById('webhookProducao').value;
+            const webhookTeste = document.getElementById('webhookTeste').value;
+            const habilitarTeste = document.getElementById('habilitarTeste').checked;
+
+            try {
+                const response = await fetch('/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ webhookProducao, webhookTeste, habilitarTeste })
+                });
+                const result = await response.json();
+                verificarAtualizacao();  // Verifica se as configurações foram atualizadas
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        // Fechar o modal
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('modal').classList.add('hidden');
+        });
+
+        // Verificar WhatsApp conectado
+        document.getElementById('verificarWhats').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/connection-status');
+                const result = await response.json();
+                if (result.conectado) {
+                    alert('WhatsApp está conectado!');
+                } else {
+                    alert('WhatsApp não está conectado.');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
